@@ -9,7 +9,7 @@
 					</el-icon>
 					查询
 				</el-button>
-				<el-button size="default" type="success" class="ml10" @click="onOpenAddMenu">
+				<el-button size="default" type="success" class="ml10" @click="onOpenAddMenu('add')">
 					<el-icon>
 						<ele-FolderAdd />
 					</el-icon>
@@ -52,7 +52,7 @@
 				</el-table-column>
 				<el-table-column label="操作" show-overflow-tooltip width="140">
 					<template #default="scope">
-						<el-button size="small" text type="primary" @click="onOpenAddMenu('add')">新增</el-button>
+						<!-- <el-button size="small" text type="primary" @click="onOpenAddMenu('add')">新增</el-button> -->
 						<el-button size="small" text type="primary" @click="onOpenEditMenu('edit', scope.row)">修改</el-button>
 						<el-button size="small" text type="primary" @click="onTabelRowDel(scope.row)">删除</el-button>
 					</template>
@@ -67,8 +67,8 @@
 import { defineAsyncComponent, ref, onMounted, reactive } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
-// import { storeToRefs } from 'pinia';
-// import { useRoutesList } from '/@/stores/routesList';
+import { storeToRefs } from 'pinia';
+import { useRoutesList } from '/@/stores/routesList';
 // import { setBackEndControlRefreshRoutes } from "/@/router/backEnd";
 import { useMenuApi } from '/@/api/menu/index';
 
@@ -77,8 +77,8 @@ const MenuDialog = defineAsyncComponent(() => import('/@/views/system/menu/dialo
 const menuApi = useMenuApi();
 
 // 定义变量内容
-// const stores = useRoutesList();
-// const { routesList } = storeToRefs(stores);
+const stores = useRoutesList();
+const { routesList } = storeToRefs(stores);
 const menuDialogRef = ref();
 const state = reactive({
 	tableData: {
@@ -92,10 +92,10 @@ const getTableData = () => {
 	state.tableData.loading = true;
 	menuApi
 		.getList()
-		.then((res) => {
-			console.log(res);
+		.then(async (res) => {
 			if (res.code === 200) {
-				state.tableData.data = res.data;
+				console.log('res.data', routesList.value);
+				state.tableData.data = routesList.value;
 			}
 			state.tableData.loading = false;
 		})

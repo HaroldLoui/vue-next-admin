@@ -207,13 +207,14 @@ const getMenuData = (routes: RouteItems) => {
 // 打开弹窗
 const openDialog = (type: string, row?: any) => {
 	if (type === 'edit') {
-		// 模拟数据，实际请走接口
-		row.menuType = 'menu';
-		row.menuSort = Math.random();
-		row.component = `${row.component} `
-			.match(/\'(.+)\'/g)
-			?.join('')
-			.replace(/\'/g, '');
+		console.log(row);
+		// // 模拟数据，实际请走接口
+		// row.menuType = 'menu';
+		// row.menuSort = Math.random();
+		// row.component = `${row.component} `
+		// 	.match(/\'(.+)\'/g)
+		// 	?.join('')
+		// 	.replace(/\'/g, '');
 		state.ruleForm = row;
 		state.dialog.title = '修改菜单';
 		state.dialog.submitTxt = '修 改';

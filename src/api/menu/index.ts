@@ -15,7 +15,7 @@ export function useMenuApi() {
 		getList: (params?: object) => {
 			return request({
 				// url: '/gitee/lyt-top/vue-next-admin-images/raw/master/menu/adminMenu.json',
-				url: '/menu/list',
+				url: '/sys/menu/list',
 				method: 'get',
 				params,
 			});
