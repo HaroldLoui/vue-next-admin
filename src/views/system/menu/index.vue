@@ -67,16 +67,18 @@
 import { defineAsyncComponent, ref, onMounted, reactive } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
-import { storeToRefs } from 'pinia';
-import { useRoutesList } from '/@/stores/routesList';
+// import { storeToRefs } from 'pinia';
+// import { useRoutesList } from '/@/stores/routesList';
 // import { setBackEndControlRefreshRoutes } from "/@/router/backEnd";
+import { useMenuApi } from '/@/api/menu/index';
 
 // 引入组件
 const MenuDialog = defineAsyncComponent(() => import('/@/views/system/menu/dialog.vue'));
+const menuApi = useMenuApi();
 
 // 定义变量内容
-const stores = useRoutesList();
-const { routesList } = storeToRefs(stores);
+// const stores = useRoutesList();
+// const { routesList } = storeToRefs(stores);
 const menuDialogRef = ref();
 const state = reactive({
 	tableData: {
@@ -88,10 +90,20 @@ const state = reactive({
 // 获取路由数据，真实请从接口获取
 const getTableData = () => {
 	state.tableData.loading = true;
-	state.tableData.data = routesList.value;
-	setTimeout(() => {
-		state.tableData.loading = false;
-	}, 500);
+	menuApi
+		.getList()
+		.then((res) => {
+			console.log(res);
+			if (res.code === 200) {
+				state.tableData.data = res.data;
+			}
+			state.tableData.loading = false;
+		})
+		.catch(() => {});
+	// state.tableData.data = routesList.value;
+	// setTimeout(() => {
+	// 	state.tableData.loading = false;
+	// }, 500);
 };
 // 打开新增菜单弹窗
 const onOpenAddMenu = (type: string) => {

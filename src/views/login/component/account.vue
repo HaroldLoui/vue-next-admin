@@ -100,22 +100,14 @@ const onSignIn = async () => {
 	useLoginApi()
 		.signIn(state.ruleForm)
 		.then(async (res) => {
-			console.log(res);
 			if (res.code === 200) {
 				// 存储 token 到浏览器缓存
-				Session.set('token', Math.random().toString(36).substr(0));
+				Session.set('token', res.data);
 				// 模拟数据，对接接口时，记得删除多余代码及对应依赖的引入。用于 `/src/stores/userInfo.ts` 中不同用户登录判断（模拟数据）
 				Cookies.set('userName', state.ruleForm.username);
-				// if (!themeConfig.value.isRequestRoutes) {
-				// 	// 前端控制路由，2、请注意执行顺序
-				// 	const isNoPower = await initFrontEndControlRoutes();
-				// 	console.log('isNoPower1', isNoPower);
-				// 	signInSuccess(isNoPower);
-				// } else {
 				// 模拟后端控制路由，isRequestRoutes 为 true，则开启后端控制路由
 				// 添加完动态路由，再进行 router 跳转，否则可能报错 No match found for location with path "/"
 				const isNoPower = await initBackEndControlRoutes();
-				console.log('isNoPower2', isNoPower);
 				// 执行完 initBackEndControlRoutes，再执行 signInSuccess
 				signInSuccess(isNoPower);
 			} else {
@@ -123,8 +115,7 @@ const onSignIn = async () => {
 				state.loading.signIn = false;
 			}
 		})
-		.catch((err) => {
-			console.log('err111', err);
+		.catch(() => {
 			state.loading.signIn = false;
 		});
 };

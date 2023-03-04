@@ -1,5 +1,5 @@
 import { RouteRecordRaw } from 'vue-router';
-import { storeToRefs } from 'pinia';
+// import { storeToRefs } from 'pinia';
 import pinia from '/@/stores/index';
 import { useUserInfo } from '/@/stores/userInfo';
 import { useRequestOldRoutes } from '/@/stores/requestOldRoutes';
@@ -43,7 +43,6 @@ export async function initBackEndControlRoutes() {
 	await useUserInfo().setUserInfos();
 	// 获取路由菜单数据
 	const res = await getBackEndControlRoutes();
-	console.log(res);
 	// 无登录权限时，添加判断
 	// https://gitee.com/lyt-top/vue-next-admin/issues/I64HVO
 	if (res.data.length <= 0) return Promise.resolve(true);
@@ -109,13 +108,14 @@ export async function setAddRoute() {
  */
 export function getBackEndControlRoutes() {
 	// 模拟 admin 与 test
-	const stores = useUserInfo(pinia);
-	const { userInfos } = storeToRefs(stores);
-	const auth = userInfos.value.roles[0];
+	// const stores = useUserInfo(pinia);
+	// const { userInfos } = storeToRefs(stores);
+	// const auth = userInfos.value.roles[0];
 	// 管理员 admin
-	if (auth === 'admin') return menuApi.getAdminMenu();
+	// if (auth === 'admin') return menuApi.getList();
 	// 其它用户 test
-	else return menuApi.getTestMenu();
+	// else return menuApi.getTestMenu();
+	return menuApi.getList();
 }
 
 /**
