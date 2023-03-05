@@ -14,10 +14,35 @@ export function useMenuApi() {
 	return {
 		getList: (params?: object) => {
 			return request({
-				// url: '/gitee/lyt-top/vue-next-admin-images/raw/master/menu/adminMenu.json',
 				url: '/sys/menu/list',
 				method: 'get',
 				params,
+			});
+		},
+		saveMenu: (data?: object) => {
+			return request({
+				url: '/sys/menu/save',
+				method: 'post',
+				data: data,
+			});
+		},
+		updateMenu: (data?: object) => {
+			return request({
+				url: '/sys/menu/update',
+				method: 'put',
+				data: data,
+			});
+		},
+		deleteMenu: (id: string) => {
+			return request({
+				url: `/sys/menu/delete?id=${id}`,
+				method: 'delete',
+			});
+		},
+		deleteMenuForce: (id: string) => {
+			return request({
+				url: `/sys/menu/deleteForce?id=${id}`,
+				method: 'delete',
 			});
 		},
 	};

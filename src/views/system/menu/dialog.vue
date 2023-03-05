@@ -7,7 +7,7 @@
 						<el-form-item label="上级菜单">
 							<el-cascader
 								:options="state.menuData"
-								:props="{ checkStrictly: true, value: 'path', label: 'title' }"
+								:props="{ checkStrictly: true, value: 'id', label: 'title' }"
 								placeholder="请选择上级菜单"
 								clearable
 								class="w100"
@@ -56,7 +56,7 @@
 						</el-col>
 						<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
 							<el-form-item label="组件路径">
-								<el-input v-model="state.ruleForm.component" placeholder="组件路径" clearable></el-input>
+								<el-input v-model="state.ruleForm.componentAlias" placeholder="组件路径" clearable></el-input>
 							</el-form-item>
 						</el-col>
 						<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
@@ -150,11 +150,11 @@ import { defineAsyncComponent, reactive, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoutesList } from '/@/stores/routesList';
 import { i18n } from '/@/i18n/index';
-// import { setBackEndControlRefreshRoutes } from "/@/router/backEnd";
+import { setBackEndControlRefreshRoutes } from '/@/router/backEnd';
+import { useMenuApi } from '/@/api/menu/index';
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
-
 // 引入组件
 const IconSelector = defineAsyncComponent(() => import('/@/components/iconSelector/index.vue'));
 
@@ -165,10 +165,13 @@ const { routesList } = storeToRefs(stores);
 const state = reactive({
 	// 参数请参考 `/src/router/route.ts` 中的 `dynamicRoutes` 路由菜单格式
 	ruleForm: {
-		menuSuperior: [], // 上级菜单
+		id: '',
+		parentId: '',
+		menuSuperior: [] as string[], // 上级菜单
 		menuType: 'menu', // 菜单类型
 		name: '', // 路由名称
 		component: '', // 组件路径
+		componentAlias: '', // 组件路径
 		isLink: false, // 是否外链
 		menuSort: 0, // 菜单排序
 		path: '', // 路由路径
@@ -193,8 +196,12 @@ const state = reactive({
 		submitTxt: '',
 	},
 });
+// 定义api接口
+const menuApi = useMenuApi();
 
-// 获取 pinia 中的路由
+/**
+ * 获取 pinia 中的路由
+ */
 const getMenuData = (routes: RouteItems) => {
 	const arr: RouteItems = [];
 	routes.map((val: RouteItem) => {
@@ -204,51 +211,133 @@ const getMenuData = (routes: RouteItems) => {
 	});
 	return arr;
 };
-// 打开弹窗
+
+/**
+ * 打开弹窗
+ * @param type edit/add
+ * @param row 传入进来的数据
+ */
 const openDialog = (type: string, row?: any) => {
+	// 加载上级菜单
+	state.menuData = getMenuData(routesList.value);
 	if (type === 'edit') {
-		console.log(row);
-		// // 模拟数据，实际请走接口
-		// row.menuType = 'menu';
-		// row.menuSort = Math.random();
-		// row.component = `${row.component} `
-		// 	.match(/\'(.+)\'/g)
-		// 	?.join('')
-		// 	.replace(/\'/g, '');
 		state.ruleForm = row;
 		state.dialog.title = '修改菜单';
 		state.dialog.submitTxt = '修 改';
 	} else {
 		state.dialog.title = '新增菜单';
 		state.dialog.submitTxt = '新 增';
-		// 清空表单，此项需加表单验证才能使用
-		// nextTick(() => {
-		// 	menuDialogFormRef.value.resetFields();
-		// });
+		// 在当前行进行新增表示给当前菜单添加子菜单
+		if (row) {
+			const parentId = row.id;
+			let menuSuperior: string[] = [];
+			Object.assign(menuSuperior, row.menuSuperior);
+			state.ruleForm.menuSuperior = menuSuperior;
+			state.ruleForm.menuSuperior.push(parentId);
+		}
 	}
+	// 清空表单，此项需加表单验证才能使用
+	// nextTick(() => {
+	// 	menuDialogFormRef.value.resetFields();
+	// });
 	state.dialog.type = type;
 	state.dialog.isShowDialog = true;
 };
-// 关闭弹窗
+
+/**
+ * 关闭弹窗
+ */
 const closeDialog = () => {
 	state.dialog.isShowDialog = false;
 };
-// 是否内嵌下拉改变
+
+/**
+ * 是否内嵌下拉改变
+ */
 const onSelectIframeChange = () => {
-	if (state.ruleForm.meta.isIframe) state.ruleForm.isLink = true;
-	else state.ruleForm.isLink = false;
+	if (state.ruleForm.meta.isIframe) {
+		state.ruleForm.isLink = true;
+	} else {
+		state.ruleForm.isLink = false;
+	}
 };
-// 取消
+
+/**
+ * 取消
+ */
 const onCancel = () => {
 	closeDialog();
 };
-// 提交
+
+/**
+ * 提交
+ */
 const onSubmit = () => {
-	closeDialog(); // 关闭弹窗
-	emit('refresh');
-	// if (state.dialog.type === 'add') { }
-	// setBackEndControlRefreshRoutes() // 刷新菜单，未进行后端接口测试
+	const data = form2Data();
+	if (state.dialog.type === 'add') {
+		saveMenu(data);
+	} else {
+		updateMenu(data);
+	}
 };
+
+/**
+ * 调用新增菜单接口
+ */
+const saveMenu = async (data: object) => {
+	const res = await menuApi.saveMenu(data);
+	if (res.code === 200) {
+		// 关闭弹窗
+		closeDialog();
+		// 刷新菜单
+		await setBackEndControlRefreshRoutes();
+		// 发送refresh事件
+		emit('refresh');
+	}
+};
+
+/**
+ * 调用修改菜单按钮
+ */
+const updateMenu = async (data: object) => {
+	const res = await menuApi.updateMenu(data);
+	if (res.code === 200) {
+		// 关闭弹窗
+		closeDialog();
+		// 刷新菜单
+		await setBackEndControlRefreshRoutes();
+		// 发送refresh事件
+		emit('refresh');
+	}
+};
+
+/**
+ * 将form表单内容转为api接口所需要的格式
+ */
+const form2Data = () => {
+	const form = state.ruleForm;
+	let data = {
+		id: form.id,
+		parentId: form.menuSuperior[form.menuSuperior.length - 1] || 0,
+		type: form.menuType === 'menu' ? 0 : 1,
+		name: form.name,
+		component: form.componentAlias,
+		isLink: form.isLink,
+		sort: form.menuSort,
+		path: form.path,
+		redirect: form.redirect,
+		title: form.meta.title,
+		icon: form.meta.icon,
+		isHide: form.meta.isHide,
+		link: form.meta.isLink,
+		isAffix: form.meta.isAffix,
+		isKeepAlive: form.meta.isKeepAlive,
+		isIframe: form.meta.isIframe,
+		roles: form.meta.roles.toString(),
+	};
+	return data;
+};
+
 // 页面加载时
 onMounted(() => {
 	state.menuData = getMenuData(routesList.value);

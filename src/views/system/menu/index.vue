@@ -42,7 +42,7 @@
 				</el-table-column>
 				<el-table-column label="排序" show-overflow-tooltip width="80">
 					<template #default="scope">
-						{{ scope.$index }}
+						{{ scope.row.menuSort }}
 					</template>
 				</el-table-column>
 				<el-table-column label="类型" show-overflow-tooltip width="80">
@@ -50,9 +50,9 @@
 						<el-tag type="success" size="small">{{ scope.row.xx }}菜单</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" show-overflow-tooltip width="140">
+				<el-table-column label="操作" show-overflow-tooltip width="170">
 					<template #default="scope">
-						<!-- <el-button size="small" text type="primary" @click="onOpenAddMenu('add')">新增</el-button> -->
+						<el-button size="small" text type="primary" @click="onOpenAddMenu('add', scope.row)">新增</el-button>
 						<el-button size="small" text type="primary" @click="onOpenEditMenu('edit', scope.row)">修改</el-button>
 						<el-button size="small" text type="primary" @click="onTabelRowDel(scope.row)">删除</el-button>
 					</template>
@@ -67,18 +67,17 @@
 import { defineAsyncComponent, ref, onMounted, reactive } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
-import { storeToRefs } from 'pinia';
 import { useRoutesList } from '/@/stores/routesList';
-// import { setBackEndControlRefreshRoutes } from "/@/router/backEnd";
+import { setBackEndControlRefreshRoutes, backEndComponent } from '/@/router/backEnd';
 import { useMenuApi } from '/@/api/menu/index';
 
 // 引入组件
 const MenuDialog = defineAsyncComponent(() => import('/@/views/system/menu/dialog.vue'));
+// 使用api接口
 const menuApi = useMenuApi();
 
 // 定义变量内容
 const stores = useRoutesList();
-const { routesList } = storeToRefs(stores);
 const menuDialogRef = ref();
 const state = reactive({
 	tableData: {
@@ -87,46 +86,91 @@ const state = reactive({
 	},
 });
 
-// 获取路由数据，真实请从接口获取
-const getTableData = () => {
+/**
+ * 获取路由数据
+ */
+const getTableData = async () => {
 	state.tableData.loading = true;
-	menuApi
-		.getList()
-		.then(async (res) => {
-			if (res.code === 200) {
-				console.log('res.data', routesList.value);
-				state.tableData.data = routesList.value;
-			}
-			state.tableData.loading = false;
-		})
-		.catch(() => {});
-	// state.tableData.data = routesList.value;
-	// setTimeout(() => {
-	// 	state.tableData.loading = false;
-	// }, 500);
+	// 查询菜单列表数据
+	const res = await menuApi.getList();
+	if (res.code === 200) {
+		// 构造动态路由
+		const dynamicRoutes = await backEndComponent(res.data);
+		stores.setRoutesList(dynamicRoutes);
+		state.tableData.data = dynamicRoutes;
+	}
+	state.tableData.loading = false;
 };
-// 打开新增菜单弹窗
-const onOpenAddMenu = (type: string) => {
-	menuDialogRef.value.openDialog(type);
+
+/**
+ * 打开新增菜单弹窗
+ * @param type edit/add
+ */
+const onOpenAddMenu = (type: string, row?: RouteRecordRaw) => {
+	menuDialogRef.value.openDialog(type, row);
 };
-// 打开编辑菜单弹窗
+
+/**
+ * 打开编辑菜单弹窗
+ * @param type edit/add
+ * @param row 当前行数据
+ */
 const onOpenEditMenu = (type: string, row: RouteRecordRaw) => {
 	menuDialogRef.value.openDialog(type, row);
 };
-// 删除当前行
+
+/**
+ * 删除当前行
+ * @param row 当前行数据
+ */
 const onTabelRowDel = (row: RouteRecordRaw) => {
-	ElMessageBox.confirm(`此操作将永久删除路由：${row.path}, 是否继续?`, '提示', {
+	if (row.children && row.children?.length > 0) {
+		deleteMenuOrForce('此操作将永久删除当前路由及其所有子路由, 是否继续?', deleteMenuForce, row);
+	} else {
+		deleteMenuOrForce('此操作将永久删除当前路由, 是否继续?', deleteMenu, row);
+	}
+};
+
+/**
+ * 删除或者强制删除当前菜单
+ */
+const deleteMenuOrForce = (title: string, fn: Function, row: RouteRecordRaw) => {
+	ElMessageBox.confirm(title, '提示', {
 		confirmButtonText: '删除',
 		cancelButtonText: '取消',
 		type: 'warning',
 	})
-		.then(() => {
-			ElMessage.success('删除成功');
-			getTableData();
-			//await setBackEndControlRefreshRoutes() // 刷新菜单，未进行后端接口测试
+		.then(async () => {
+			const res = await fn(row);
+			if (res.code === 200) {
+				ElMessage.success(res.msg);
+				// 刷新菜单
+				await setBackEndControlRefreshRoutes();
+				// 刷新表格数据
+				getTableData();
+			} else {
+				ElMessage.warning(res.msg);
+			}
 		})
 		.catch(() => {});
 };
+
+/**
+ * 调用删除菜单方法
+ * @param row 当前行数据
+ */
+const deleteMenu = (row: any) => {
+	return menuApi.deleteMenu(row.id);
+};
+
+/**
+ * 调用强制删除菜单方法（会删除所有子菜单）
+ * @param row 当前行数据
+ */
+const deleteMenuForce = (row: any) => {
+	return menuApi.deleteMenuForce(row.id);
+};
+
 // 页面加载时
 onMounted(() => {
 	getTableData();

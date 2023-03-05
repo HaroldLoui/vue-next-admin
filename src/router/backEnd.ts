@@ -135,7 +135,11 @@ export async function setBackEndControlRefreshRoutes() {
 export function backEndComponent(routes: any) {
 	if (!routes) return;
 	return routes.map((item: any) => {
-		if (item.component) item.component = dynamicImport(dynamicViewsModules, item.component as string);
+		const componentAlias = item.component;
+		if (item.component) {
+			item.component = dynamicImport(dynamicViewsModules, item.component as string);
+			item.componentAlias = componentAlias;
+		}
 		item.children && backEndComponent(item.children);
 		return item;
 	});

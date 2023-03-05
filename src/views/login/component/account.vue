@@ -88,15 +88,22 @@ const state = reactive({
 		signIn: false,
 	},
 });
+// 定义api接口
+const loginApi = useLoginApi();
 
-// 时间获取
+/**
+ * 当前时间问候语
+ */
 const currentTime = computed(() => {
 	return formatAxis(new Date());
 });
-// 登录
+
+/**
+ * 登录
+ */
 const onSignIn = async () => {
 	state.loading.signIn = true;
-	useLoginApi()
+	loginApi
 		.signIn(state.ruleForm)
 		.then(async (res) => {
 			if (res.code === 200) {
@@ -118,7 +125,10 @@ const onSignIn = async () => {
 			state.loading.signIn = false;
 		});
 };
-// 登录成功后的跳转
+
+/**
+ * 登录成功后的跳转
+ */
 const signInSuccess = (isNoPower: boolean | undefined) => {
 	if (isNoPower) {
 		ElMessage.warning('抱歉，您没有登录权限');
