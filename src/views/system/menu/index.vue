@@ -124,7 +124,7 @@ const onOpenEditMenu = (type: string, row: RouteRecordRaw) => {
  * @param row 当前行数据
  */
 const onTabelRowDel = (row: RouteRecordRaw) => {
-	if (row.children && row.children?.length > 0) {
+	if (row.children && row.children.length > 0) {
 		deleteMenuOrForce('此操作将永久删除当前路由及其所有子路由, 是否继续?', deleteMenuForce, row);
 	} else {
 		deleteMenuOrForce('此操作将永久删除当前路由, 是否继续?', deleteMenu, row);
