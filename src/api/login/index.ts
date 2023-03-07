@@ -16,11 +16,10 @@ export function useLoginApi() {
 				data,
 			});
 		},
-		signOut: (data: object) => {
+		signOut: () => {
 			return request({
 				url: '/login/signOut',
-				method: 'post',
-				data,
+				method: 'get',
 			});
 		},
 	};

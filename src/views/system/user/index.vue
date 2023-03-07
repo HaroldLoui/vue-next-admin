@@ -25,7 +25,7 @@
 				<el-table-column prop="email" label="邮箱" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="status" label="用户状态" show-overflow-tooltip>
 					<template #default="scope">
-						<el-tag type="success" v-if="scope.row.status === 0">启用</el-tag>
+						<el-tag type="success" v-if="scope.row.status">启用</el-tag>
 						<el-tag type="info" v-else>禁用</el-tag>
 					</template>
 				</el-table-column>
@@ -109,7 +109,7 @@ const onOpenEditUser = (type: string, row: RowUserType) => {
 };
 // 删除用户
 const onRowDel = (row: RowUserType) => {
-	ElMessageBox.confirm(`此操作将永久删除账户名称：“${row.userName}”，是否继续?`, '提示', {
+	ElMessageBox.confirm(`此操作将永久删除账户名称：“${row.username}”，是否继续?`, '提示', {
 		confirmButtonText: '确认',
 		cancelButtonText: '取消',
 		type: 'warning',
