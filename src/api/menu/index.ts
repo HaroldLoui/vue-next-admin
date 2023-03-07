@@ -7,24 +7,40 @@ import request from '/@/utils/request';
  *
  * 后端控制菜单模拟json，路径在 https://gitee.com/lyt-top/vue-next-admin-images/tree/master/menu
  * 后端控制路由，isRequestRoutes 为 true，则开启后端控制路由
- * @method getAdminMenu 获取后端动态路由菜单(admin)
- * @method getTestMenu 获取后端动态路由菜单(test)
  */
 export function useMenuApi() {
 	return {
-		getAdminMenu: (params?: object) => {
+		getList: (params?: object) => {
 			return request({
-				// url: '/gitee/lyt-top/vue-next-admin-images/raw/master/menu/adminMenu.json',
-				url: '/menu/list',
+				url: '/sys/menu/list',
 				method: 'get',
 				params,
 			});
 		},
-		getTestMenu: (params?: object) => {
+		saveMenu: (data?: object) => {
 			return request({
-				url: '/menu/list',
-				method: 'get',
-				params,
+				url: '/sys/menu/save',
+				method: 'post',
+				data: data,
+			});
+		},
+		updateMenu: (data?: object) => {
+			return request({
+				url: '/sys/menu/update',
+				method: 'put',
+				data: data,
+			});
+		},
+		deleteMenu: (id: string) => {
+			return request({
+				url: `/sys/menu/delete?id=${id}`,
+				method: 'delete',
+			});
+		},
+		deleteMenuForce: (id: string) => {
+			return request({
+				url: `/sys/menu/deleteForce?id=${id}`,
+				method: 'delete',
 			});
 		},
 	};

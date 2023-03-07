@@ -3,7 +3,7 @@
 		<el-card shadow="hover" class="layout-padding-auto">
 			<div class="system-user-search mb15">
 				<el-input size="default" placeholder="请输入用户名称" style="max-width: 180px"> </el-input>
-				<el-button size="default" type="primary" class="ml10">
+				<el-button size="default" type="primary" class="ml10" @click="getTableData()">
 					<el-icon>
 						<ele-Search />
 					</el-icon>
@@ -18,10 +18,9 @@
 			</div>
 			<el-table :data="state.tableData.data" v-loading="state.tableData.loading" style="width: 100%">
 				<el-table-column type="index" label="序号" width="60" />
-				<el-table-column prop="userName" label="账户名称" show-overflow-tooltip></el-table-column>
-				<el-table-column prop="userNickname" label="用户昵称" show-overflow-tooltip></el-table-column>
-				<el-table-column prop="roleSign" label="关联角色" show-overflow-tooltip></el-table-column>
-				<el-table-column prop="department" label="部门" show-overflow-tooltip></el-table-column>
+				<el-table-column prop="username" label="用户名" show-overflow-tooltip></el-table-column>
+				<el-table-column prop="nickname" label="用户昵称" show-overflow-tooltip></el-table-column>
+				<el-table-column prop="password" label="密码" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="phone" label="手机号" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="email" label="邮箱" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="status" label="用户状态" show-overflow-tooltip>
@@ -30,14 +29,18 @@
 						<el-tag type="info" v-else>禁用</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column prop="describe" label="用户描述" show-overflow-tooltip></el-table-column>
+				<el-table-column prop="type" label="用户类型" show-overflow-tooltip>
+					<template #default="scope">
+						<el-tag type="success" v-if="scope.row.type === 0">超级管理员</el-tag>
+						<el-tag type="info" v-else-if="scope.row.type === 1">普通管理员</el-tag>
+						<el-tag type="info" v-else>普通用户</el-tag>
+					</template>
+				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" show-overflow-tooltip></el-table-column>
 				<el-table-column label="操作" width="100">
 					<template #default="scope">
-						<el-button :disabled="scope.row.userName === 'admin'" size="small" text type="primary" @click="onOpenEditUser('edit', scope.row)"
-							>修改</el-button
-						>
-						<el-button :disabled="scope.row.userName === 'admin'" size="small" text type="primary" @click="onRowDel(scope.row)">删除</el-button>
+						<el-button size="small" text type="primary" @click="onOpenEditUser('edit', scope.row)">修改</el-button>
+						<el-button size="small" text type="primary" @click="onRowDel(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -62,11 +65,13 @@
 <script setup lang="ts" name="systemUser">
 import { defineAsyncComponent, reactive, onMounted, ref } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
+import { useUserApi } from '/@/api/user/index';
 
 // 引入组件
 const UserDialog = defineAsyncComponent(() => import('/@/views/system/user/dialog.vue'));
 
 // 定义变量内容
+const userApi = useUserApi();
 const userDialogRef = ref();
 const state = reactive<SysUserState>({
 	tableData: {
@@ -81,30 +86,18 @@ const state = reactive<SysUserState>({
 });
 
 // 初始化表格数据
-const getTableData = () => {
+const getTableData = async () => {
 	state.tableData.loading = true;
-	const data = [];
-	for (let i = 0; i < 2; i++) {
-		data.push({
-			userName: i === 0 ? 'admin' : 'test',
-			userNickname: i === 0 ? '我是管理员' : '我是普通用户',
-			roleSign: i === 0 ? 'admin' : 'common',
-			department: i === 0 ? ['vueNextAdmin', 'IT外包服务'] : ['vueNextAdmin', '资本控股'],
-			phone: '12345678910',
-			email: 'vueNextAdmin@123.com',
-			sex: '女',
-			password: '123456',
-			overdueTime: new Date(),
-			status: true,
-			describe: i === 0 ? '不可删除' : '测试用户',
-			createTime: new Date().toLocaleString(),
-		});
+	const res = await userApi.getList(state.tableData.param);
+	if (res.code === 200) {
+		console.log(res.data);
+		state.tableData.data = res.data.records;
+		state.tableData.total = res.data.total;
+	} else {
+		state.tableData.data = [];
+		state.tableData.total = 0;
 	}
-	state.tableData.data = data;
-	state.tableData.total = state.tableData.data.length;
-	setTimeout(() => {
-		state.tableData.loading = false;
-	}, 500);
+	state.tableData.loading = false;
 };
 // 打开新增用户弹窗
 const onOpenAddUser = (type: string) => {
@@ -116,7 +109,7 @@ const onOpenEditUser = (type: string, row: RowUserType) => {
 };
 // 删除用户
 const onRowDel = (row: RowUserType) => {
-	ElMessageBox.confirm(`此操作将永久删除账户名称：“${row.userName}”，是否继续?`, '提示', {
+	ElMessageBox.confirm(`此操作将永久删除账户名称：“${row.username}”，是否继续?`, '提示', {
 		confirmButtonText: '确认',
 		cancelButtonText: '取消',
 		type: 'warning',

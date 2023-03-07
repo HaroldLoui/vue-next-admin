@@ -1,41 +1,31 @@
+<!-- eslint-disable vue/valid-v-model -->
 <template>
 	<div class="system-user-dialog-container">
 		<el-dialog :title="state.dialog.title" v-model="state.dialog.isShowDialog" width="769px">
 			<el-form ref="userDialogFormRef" :model="state.ruleForm" size="default" label-width="90px">
 				<el-row :gutter="35">
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="账户名称">
-							<el-input v-model="state.ruleForm.userName" placeholder="请输入账户名称" clearable></el-input>
+						<el-form-item label="用户名">
+							<el-input v-model="state.ruleForm.username" placeholder="请输入用户名" clearable></el-input>
 						</el-form-item>
 					</el-col>
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
 						<el-form-item label="用户昵称">
-							<el-input v-model="state.ruleForm.userNickname" placeholder="请输入用户昵称" clearable></el-input>
+							<el-input v-model="state.ruleForm.nickname" placeholder="请输入用户昵称" clearable></el-input>
 						</el-form-item>
 					</el-col>
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="关联角色">
-							<el-select v-model="state.ruleForm.roleSign" placeholder="请选择" clearable class="w100">
-								<el-option label="超级管理员" value="admin"></el-option>
-								<el-option label="普通用户" value="common"></el-option>
+						<el-form-item label="用户密码">
+							<el-input v-model="state.ruleForm.password" placeholder="请输入密码" clearable disabled></el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
+						<el-form-item label="用户类型">
+							<el-select v-model="state.ruleForm.type" placeholder="请选择" clearable class="w100">
+								<el-option label="超级管理员" value="0" disabled></el-option>
+								<el-option label="普通管理员" value="1"></el-option>
+								<el-option label="普通用户" value="2"></el-option>
 							</el-select>
-						</el-form-item>
-					</el-col>
-					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="部门">
-							<el-cascader
-								:options="state.deptData"
-								:props="{ checkStrictly: true, value: 'deptName', label: 'deptName' }"
-								placeholder="请选择部门"
-								clearable
-								class="w100"
-								v-model="state.ruleForm.department"
-							>
-								<template #default="{ node, data }">
-									<span>{{ data.deptName }}</span>
-									<span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
-								</template>
-							</el-cascader>
 						</el-form-item>
 					</el-col>
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
@@ -45,25 +35,7 @@
 					</el-col>
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
 						<el-form-item label="邮箱">
-							<el-input v-model="state.ruleForm.email" placeholder="请输入" clearable></el-input>
-						</el-form-item>
-					</el-col>
-					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="性别">
-							<el-select v-model="state.ruleForm.sex" placeholder="请选择" clearable class="w100">
-								<el-option label="男" value="男"></el-option>
-								<el-option label="女" value="女"></el-option>
-							</el-select>
-						</el-form-item>
-					</el-col>
-					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="账户密码">
-							<el-input v-model="state.ruleForm.password" placeholder="请输入" type="password" clearable></el-input>
-						</el-form-item>
-					</el-col>
-					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="账户过期">
-							<el-date-picker v-model="state.ruleForm.overdueTime" type="date" placeholder="请选择" class="w100"> </el-date-picker>
+							<el-input v-model="state.ruleForm.email" placeholder="请输入邮箱	" clearable></el-input>
 						</el-form-item>
 					</el-col>
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
@@ -73,7 +45,7 @@
 					</el-col>
 					<el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
 						<el-form-item label="用户描述">
-							<el-input v-model="state.ruleForm.describe" type="textarea" placeholder="请输入用户描述" maxlength="150"></el-input>
+							<el-input v-model="state.ruleForm.remark" type="textarea" placeholder="请输入用户描述" maxlength="150"></el-input>
 						</el-form-item>
 					</el-col>
 				</el-row>
@@ -89,28 +61,29 @@
 </template>
 
 <script setup lang="ts" name="systemUserDialog">
+import { ElMessage } from 'element-plus';
 import { reactive, ref } from 'vue';
+import { useUserApi } from '/@/api/user/index';
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
+
+// 定义接口
+const userApi = useUserApi();
 
 // 定义变量内容
 const userDialogFormRef = ref();
 const state = reactive({
 	ruleForm: {
-		userName: '', // 账户名称
-		userNickname: '', // 用户昵称
-		roleSign: '', // 关联角色
-		department: [] as string[], // 部门
+		username: '', // 账户名称
+		nickname: '', // 用户昵称
 		phone: '', // 手机号
 		email: '', // 邮箱
-		sex: '', // 性别
-		password: '', // 账户密码
-		overdueTime: '', // 账户过期
+		password: '123456', // 账户密码
+		type: '', // 用户类型
 		status: true, // 用户状态
-		describe: '', // 用户描述
+		remark: '', // 用户描述
 	},
-	deptData: [] as DeptTreeType[], // 部门数据
 	dialog: {
 		isShowDialog: false,
 		type: '',
@@ -134,7 +107,6 @@ const openDialog = (type: string, row: RowUserType) => {
 		// });
 	}
 	state.dialog.isShowDialog = true;
-	getMenuData();
 };
 // 关闭弹窗
 const closeDialog = () => {
@@ -145,39 +117,25 @@ const onCancel = () => {
 	closeDialog();
 };
 // 提交
-const onSubmit = () => {
-	closeDialog();
-	emit('refresh');
-	// if (state.dialog.type === 'add') { }
+const onSubmit = async () => {
+	const data = state.ruleForm;
+	if (state.dialog.type === 'edit') {
+		console.log(state.ruleForm);
+	} else {
+		// 新增用户
+		const res = await insertUser(data);
+		if (res.code === 200) {
+			ElMessage.success(res.msg);
+			closeDialog();
+			emit('refresh');
+		} else {
+			ElMessage.warning(res.msg);
+		}
+	}
 };
-// 初始化部门数据
-const getMenuData = () => {
-	state.deptData.push({
-		deptName: 'vueNextAdmin',
-		createTime: new Date().toLocaleString(),
-		status: true,
-		sort: Math.random(),
-		describe: '顶级部门',
-		id: Math.random(),
-		children: [
-			{
-				deptName: 'IT外包服务',
-				createTime: new Date().toLocaleString(),
-				status: true,
-				sort: Math.random(),
-				describe: '总部',
-				id: Math.random(),
-			},
-			{
-				deptName: '资本控股',
-				createTime: new Date().toLocaleString(),
-				status: true,
-				sort: Math.random(),
-				describe: '分部',
-				id: Math.random(),
-			},
-		],
-	});
+
+const insertUser = (data: object) => {
+	return userApi.saveUser(data);
 };
 
 // 暴露变量

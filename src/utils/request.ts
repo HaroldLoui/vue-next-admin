@@ -19,8 +19,12 @@ const service: AxiosInstance = axios.create({
 service.interceptors.request.use(
 	(config) => {
 		// 在发送请求之前做些什么 token
-		if (Session.get('token')) {
-			config.headers!['Authorization'] = `${Session.get('token')}`;
+		let tokenJSON = Session.get('token');
+		if (tokenJSON) {
+			let tokenInfo = JSON.parse(tokenJSON);
+			let tokenName = tokenInfo.tokenName;
+			let tokenValue = tokenInfo.tokenValue;
+			config.headers![tokenName] = tokenValue;
 		}
 		return config;
 	},

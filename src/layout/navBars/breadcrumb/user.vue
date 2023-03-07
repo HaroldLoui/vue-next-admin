@@ -92,10 +92,14 @@ import { useThemeConfig } from '/@/stores/themeConfig';
 import other from '/@/utils/other';
 import mittBus from '/@/utils/mitt';
 import { Session, Local } from '/@/utils/storage';
+import { useLoginApi } from '/@/api/login/index';
 
 // 引入组件
 const UserNews = defineAsyncComponent(() => import('/@/layout/navBars/breadcrumb/userNews.vue'));
 const Search = defineAsyncComponent(() => import('/@/layout/navBars/breadcrumb/search.vue'));
+
+// 定义接口
+const loginApi = useLoginApi();
 
 // 定义变量内容
 const { locale, t } = useI18n();
@@ -152,11 +156,11 @@ const onHandleCommandClick = (path: string) => {
 				if (action === 'confirm') {
 					instance.confirmButtonLoading = true;
 					instance.confirmButtonText = t('message.user.logOutExit');
-					setTimeout(() => {
+					setTimeout(async () => {
 						done();
-						setTimeout(() => {
-							instance.confirmButtonLoading = false;
-						}, 300);
+						const res = await loginApi.signOut();
+						ElMessage.success(res.msg);
+						instance.confirmButtonLoading = false;
 					}, 700);
 				} else {
 					done();
