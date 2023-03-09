@@ -2,7 +2,7 @@
 	<div class="system-user-container layout-padding">
 		<el-card shadow="hover" class="layout-padding-auto">
 			<div class="system-user-search mb15">
-				<el-input size="default" placeholder="请输入用户名称" style="max-width: 180px"> </el-input>
+				<el-input v-model="state.tableData.param.username" size="default" placeholder="请输入用户名称" style="max-width: 180px" />
 				<el-button size="default" type="primary" class="ml10" @click="getTableData()">
 					<el-icon>
 						<ele-Search />
@@ -20,7 +20,6 @@
 				<el-table-column type="index" label="序号" width="60" />
 				<el-table-column prop="username" label="用户名" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="nickname" label="用户昵称" show-overflow-tooltip></el-table-column>
-				<el-table-column prop="password" label="密码" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="phone" label="手机号" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="email" label="邮箱" show-overflow-tooltip></el-table-column>
 				<el-table-column prop="status" label="用户状态" show-overflow-tooltip>
@@ -37,9 +36,10 @@
 					</template>
 				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" show-overflow-tooltip></el-table-column>
-				<el-table-column label="操作" width="100">
+				<el-table-column label="操作" width="300">
 					<template #default="scope">
 						<el-button size="small" text type="primary" @click="onOpenEditUser('edit', scope.row)">修改</el-button>
+						<el-button size="small" text type="primary" @click="onOpenUpdatePwd(scope.row)">修改密码</el-button>
 						<el-button size="small" text type="primary" @click="onRowDel(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
@@ -59,6 +59,7 @@
 			</el-pagination>
 		</el-card>
 		<UserDialog ref="userDialogRef" @refresh="getTableData()" />
+		<PwdDialog ref="pwdDialogRef" @refresh="getTableData()" />
 	</div>
 </template>
 
@@ -69,10 +70,12 @@ import { useUserApi } from '/@/api/user/index';
 
 // 引入组件
 const UserDialog = defineAsyncComponent(() => import('/@/views/system/user/dialog.vue'));
+const PwdDialog = defineAsyncComponent(() => import('/@/views/system/user/pwdDialog.vue'));
 
 // 定义变量内容
 const userApi = useUserApi();
 const userDialogRef = ref();
+const pwdDialogRef = ref();
 const state = reactive<SysUserState>({
 	tableData: {
 		data: [],
@@ -81,6 +84,7 @@ const state = reactive<SysUserState>({
 		param: {
 			pageNum: 1,
 			pageSize: 10,
+			username: '',
 		},
 	},
 });
@@ -88,9 +92,9 @@ const state = reactive<SysUserState>({
 // 初始化表格数据
 const getTableData = async () => {
 	state.tableData.loading = true;
+	console.log('state.tableData.param', state.tableData.param);
 	const res = await userApi.getList(state.tableData.param);
 	if (res.code === 200) {
-		console.log(res.data);
 		state.tableData.data = res.data.records;
 		state.tableData.total = res.data.total;
 	} else {
@@ -107,19 +111,26 @@ const onOpenAddUser = (type: string) => {
 const onOpenEditUser = (type: string, row: RowUserType) => {
 	userDialogRef.value.openDialog(type, row);
 };
-// 删除用户
+
+/**
+ * 删除用户
+ */
 const onRowDel = (row: RowUserType) => {
 	ElMessageBox.confirm(`此操作将永久删除账户名称：“${row.username}”，是否继续?`, '提示', {
 		confirmButtonText: '确认',
 		cancelButtonText: '取消',
 		type: 'warning',
 	})
-		.then(() => {
-			getTableData();
-			ElMessage.success('删除成功');
+		.then(async () => {
+			const res = await userApi.deleteUser({ id: row.id });
+			if (res.code === 200) {
+				getTableData();
+				ElMessage.success('删除成功');
+			}
 		})
 		.catch(() => {});
 };
+
 // 分页改变
 const onHandleSizeChange = (val: number) => {
 	state.tableData.param.pageSize = val;
@@ -130,6 +141,14 @@ const onHandleCurrentChange = (val: number) => {
 	state.tableData.param.pageNum = val;
 	getTableData();
 };
+
+/**
+ * 打开修改密码弹窗
+ */
+const onOpenUpdatePwd = (row: RowUserType) => {
+	pwdDialogRef.value.openDialog(row);
+};
+
 // 页面加载时
 onMounted(() => {
 	getTableData();

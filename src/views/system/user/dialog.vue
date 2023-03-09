@@ -22,9 +22,9 @@
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
 						<el-form-item label="用户类型">
 							<el-select v-model="state.ruleForm.type" placeholder="请选择" clearable class="w100">
-								<el-option label="超级管理员" value="0" disabled></el-option>
-								<el-option label="普通管理员" value="1"></el-option>
-								<el-option label="普通用户" value="2"></el-option>
+								<el-option label="超级管理员" :value="0" disabled></el-option>
+								<el-option label="普通管理员" :value="1"></el-option>
+								<el-option label="普通用户" :value="2"></el-option>
 							</el-select>
 						</el-form-item>
 					</el-col>
@@ -106,6 +106,7 @@ const openDialog = (type: string, row: RowUserType) => {
 		// 	userDialogFormRef.value.resetFields();
 		// });
 	}
+	state.dialog.type = type;
 	state.dialog.isShowDialog = true;
 };
 // 关闭弹窗
@@ -120,22 +121,40 @@ const onCancel = () => {
 const onSubmit = async () => {
 	const data = state.ruleForm;
 	if (state.dialog.type === 'edit') {
-		console.log(state.ruleForm);
+		// 修改用户
+		updateUser(state.ruleForm);
 	} else {
 		// 新增用户
-		const res = await insertUser(data);
-		if (res.code === 200) {
-			ElMessage.success(res.msg);
-			closeDialog();
-			emit('refresh');
-		} else {
-			ElMessage.warning(res.msg);
-		}
+		insertUser(data);
 	}
 };
 
-const insertUser = (data: object) => {
-	return userApi.saveUser(data);
+/**
+ * 新增用户
+ */
+const insertUser = async (data: object) => {
+	const res = await userApi.saveUser(data);
+	if (res.code === 200) {
+		ElMessage.success(res.msg);
+		closeDialog();
+		emit('refresh');
+	} else {
+		ElMessage.warning(res.msg);
+	}
+};
+
+/**
+ * 新增用户
+ */
+const updateUser = async (data: object) => {
+	const res = await userApi.updateUser(data);
+	if (res.code === 200) {
+		ElMessage.success(res.msg);
+		closeDialog();
+		emit('refresh');
+	} else {
+		ElMessage.warning(res.msg);
+	}
 };
 
 // 暴露变量
