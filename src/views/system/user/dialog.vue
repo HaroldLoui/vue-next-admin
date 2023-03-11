@@ -176,11 +176,11 @@ const updateUser = async (data: object) => {
  * 清空表单内容及验证
  */
 const resetForm = (formEl: FormInstance | undefined) => {
+	initRuleForm();
 	if (!formEl) {
 		return;
 	}
 	formEl.resetFields();
-	initRuleForm();
 };
 
 const initRuleForm = () => {
