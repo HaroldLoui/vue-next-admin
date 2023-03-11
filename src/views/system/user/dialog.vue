@@ -172,8 +172,22 @@ const updateUser = async (data: object) => {
  * 清空表单内容及验证
  */
 const resetForm = (formEl: FormInstance | undefined) => {
-	if (!formEl) return;
+	if (!formEl) {
+		return;
+	}
 	formEl.resetFields();
+	initRuleForm();
+};
+
+const initRuleForm = () => {
+	state.ruleForm.username = '';
+	state.ruleForm.nickname = '';
+	state.ruleForm.phone = '';
+	state.ruleForm.email = '';
+	state.ruleForm.password = '123456';
+	state.ruleForm.type = '';
+	state.ruleForm.status = true;
+	state.ruleForm.remark = '';
 };
 
 // 暴露变量
