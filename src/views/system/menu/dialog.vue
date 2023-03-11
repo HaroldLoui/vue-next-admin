@@ -152,6 +152,7 @@ import { useRoutesList } from '/@/stores/routesList';
 import { i18n } from '/@/i18n/index';
 import { setBackEndControlRefreshRoutes } from '/@/router/backEnd';
 import { useMenuApi } from '/@/api/menu/index';
+import { commonFunction } from '/@/utils/commonFunction';
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
@@ -198,6 +199,7 @@ const state = reactive({
 });
 // 定义api接口
 const menuApi = useMenuApi();
+const common = commonFunction();
 
 /**
  * 获取 pinia 中的路由
@@ -223,7 +225,7 @@ const openDialog = (type: string, row?: any) => {
 	// 加载上级菜单
 	state.menuData = getMenuData(routesList.value);
 	if (type === 'edit') {
-		state.ruleForm = JSON.parse(JSON.stringify(row));
+		state.ruleForm = common.copyObject(row);
 		state.dialog.title = '修改菜单';
 		state.dialog.submitTxt = '修 改';
 	} else {

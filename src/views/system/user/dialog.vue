@@ -1,6 +1,6 @@
 <template>
 	<div class="system-user-dialog-container">
-		<el-dialog :title="state.dialog.title" v-model="state.dialog.isShowDialog" width="769px">
+		<el-dialog :title="state.dialog.title" v-model="state.dialog.isShowDialog" width="769px" @close="closeDialog">
 			<el-form ref="ruleFormRef" :rules="rules" :model="state.ruleForm" size="default" label-width="90px">
 				<el-row :gutter="35">
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
@@ -63,12 +63,14 @@
 import { ElMessage, FormInstance, FormRules } from 'element-plus';
 import { reactive, ref, nextTick } from 'vue';
 import { useUserApi } from '/@/api/user/index';
+import { commonFunction } from '/@/utils/commonFunction';
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
 
 // 定义接口
 const userApi = useUserApi();
+const common = commonFunction();
 
 // 定义变量内容
 const ruleFormRef = ref<FormInstance>();
@@ -99,7 +101,7 @@ const rules = reactive<FormRules>({
 // 打开弹窗
 const openDialog = (type: string, row: RowUserType) => {
 	if (type === 'edit') {
-		state.ruleForm = row;
+		state.ruleForm = common.copyObject(row);
 		state.dialog.title = '修改用户';
 		state.dialog.submitTxt = '修 改';
 	} else {
@@ -116,6 +118,7 @@ const closeDialog = () => {
 	// 清空表单验证
 	nextTick(() => {
 		resetForm(ruleFormRef.value);
+		initRuleForm();
 	});
 };
 
@@ -176,7 +179,6 @@ const updateUser = async (data: object) => {
  * 清空表单内容及验证
  */
 const resetForm = (formEl: FormInstance | undefined) => {
-	initRuleForm();
 	if (!formEl) {
 		return;
 	}
