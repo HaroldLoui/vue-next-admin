@@ -91,6 +91,7 @@ const state = reactive({
 	},
 });
 
+// 表单验证规则
 const rules = reactive<FormRules>({
 	username: [{ required: true, message: '用户名不能为空', trigger: 'blur' }],
 });
@@ -108,18 +109,21 @@ const openDialog = (type: string, row: RowUserType) => {
 	state.dialog.type = type;
 	state.dialog.isShowDialog = true;
 };
+
 // 关闭弹窗
 const closeDialog = () => {
 	state.dialog.isShowDialog = false;
-	// 清空表单，此项需加表单验证才能使用
+	// 清空表单验证
 	nextTick(() => {
 		resetForm(ruleFormRef.value);
 	});
 };
+
 // 取消
 const onCancel = () => {
 	closeDialog();
 };
+
 // 提交
 const onSubmit = async (formEl: FormInstance | undefined) => {
 	if (!formEl) {
