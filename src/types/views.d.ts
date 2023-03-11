@@ -87,7 +87,7 @@ declare type RowUserType = {
 	nickname: string;
 	phone: string;
 	email: string;
-	sex: string;
+	id: string;
 	password: string;
 	type: string;
 	status: boolean;

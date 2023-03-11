@@ -1,7 +1,7 @@
 <template>
 	<div class="system-menu-dialog-container">
-		<el-dialog :title="state.dialog.title" v-model="state.dialog.isShowDialog" width="769px">
-			<el-form ref="menuDialogFormRef" :model="state.ruleForm" size="default" label-width="80px">
+		<el-dialog :title="state.dialog.title" v-model="state.dialog.isShowDialog" width="769px" @close="closeDialog">
+			<el-form ref="ruleFormRef" :model="state.ruleForm" size="default" label-width="80px">
 				<el-row :gutter="35">
 					<el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
 						<el-form-item label="上级菜单">
@@ -146,7 +146,7 @@
 </template>
 
 <script setup lang="ts" name="systemMenuDialog">
-import { defineAsyncComponent, reactive, onMounted, ref } from 'vue';
+import { defineAsyncComponent, reactive, onMounted, ref, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoutesList } from '/@/stores/routesList';
 import { i18n } from '/@/i18n/index';
@@ -159,7 +159,7 @@ const emit = defineEmits(['refresh']);
 const IconSelector = defineAsyncComponent(() => import('/@/components/iconSelector/index.vue'));
 
 // 定义变量内容
-const menuDialogFormRef = ref();
+const ruleFormRef = ref();
 const stores = useRoutesList();
 const { routesList } = storeToRefs(stores);
 const state = reactive({
@@ -207,7 +207,9 @@ const getMenuData = (routes: RouteItems) => {
 	routes.map((val: RouteItem) => {
 		val['title'] = i18n.global.t(val.meta?.title as string);
 		arr.push({ ...val });
-		if (val.children) getMenuData(val.children);
+		if (val.children) {
+			getMenuData(val.children);
+		}
 	});
 	return arr;
 };
@@ -221,7 +223,7 @@ const openDialog = (type: string, row?: any) => {
 	// 加载上级菜单
 	state.menuData = getMenuData(routesList.value);
 	if (type === 'edit') {
-		state.ruleForm = row;
+		state.ruleForm = JSON.parse(JSON.stringify(row));
 		state.dialog.title = '修改菜单';
 		state.dialog.submitTxt = '修 改';
 	} else {
@@ -236,10 +238,6 @@ const openDialog = (type: string, row?: any) => {
 			state.ruleForm.menuSuperior.push(parentId);
 		}
 	}
-	// 清空表单，此项需加表单验证才能使用
-	// nextTick(() => {
-	// 	menuDialogFormRef.value.resetFields();
-	// });
 	state.dialog.type = type;
 	state.dialog.isShowDialog = true;
 };
@@ -249,6 +247,10 @@ const openDialog = (type: string, row?: any) => {
  */
 const closeDialog = () => {
 	state.dialog.isShowDialog = false;
+	nextTick(() => {
+		// 清空表单
+		resetForm();
+	});
 };
 
 /**
@@ -342,6 +344,30 @@ const form2Data = () => {
 onMounted(() => {
 	state.menuData = getMenuData(routesList.value);
 });
+
+// 清空表单及验证
+const resetForm = () => {
+	state.ruleForm.id = '';
+	state.ruleForm.parentId = '';
+	state.ruleForm.menuSuperior = [];
+	state.ruleForm.menuType = 'menu';
+	state.ruleForm.name = '';
+	state.ruleForm.component = '';
+	state.ruleForm.componentAlias = '';
+	state.ruleForm.isLink = false;
+	state.ruleForm.menuSort = 0;
+	state.ruleForm.path = '';
+	state.ruleForm.redirect = '';
+	state.ruleForm.meta.title = '';
+	state.ruleForm.meta.icon = '';
+	state.ruleForm.meta.isHide = false;
+	state.ruleForm.meta.isKeepAlive = true;
+	state.ruleForm.meta.isAffix = false;
+	state.ruleForm.meta.isLink = '';
+	state.ruleForm.meta.isIframe = false;
+	state.ruleForm.meta.roles = '';
+	state.ruleForm.btnPower = '';
+};
 
 // 暴露变量
 defineExpose({

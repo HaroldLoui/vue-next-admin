@@ -6,7 +6,7 @@ export function useUserApi() {
 			return request({
 				url: '/sys/user/list',
 				method: 'get',
-				data: params,
+				params: params,
 			});
 		},
 		saveUser: (data?: object) => {
@@ -19,6 +19,13 @@ export function useUserApi() {
 		updateUser: (data?: object) => {
 			return request({
 				url: '/sys/user/update',
+				method: 'put',
+				data: data,
+			});
+		},
+		updatePwd: (data?: object) => {
+			return request({
+				url: '/sys/user/updatePwd',
 				method: 'put',
 				data: data,
 			});
